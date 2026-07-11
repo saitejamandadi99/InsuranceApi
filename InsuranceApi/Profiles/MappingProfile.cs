@@ -1,0 +1,50 @@
+﻿using AutoMapper;
+using InsuranceApi.DTO;
+using InsuranceApi.Models;
+
+namespace InsuranceApi.Profiles
+{
+    public class MappingProfile : Profile
+    {
+        public MappingProfile()
+        {
+            CreateMap<RegisterRequestDTO, User>();
+            CreateMap<User, UserResponseDTO>();
+            CreateMap<CustomerRequestDTO, Customer>();
+            CreateMap<Customer, CustomerResponseDTO>()
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.User!.Email))
+                .ForMember(dest => dest.MobileNumber, opt => opt.MapFrom(src => src.User!.MobileNumber));
+
+            CreateMap<ProductRequestDTO, InsuranceProduct>();
+            CreateMap<InsuranceProduct, ProductResponseDTO>();
+
+            CreateMap<PlanRequestDTO, PolicyPlan>();
+            CreateMap<PolicyPlan, PlanResponseDTO>()
+                .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.InsuranceProduct!.ProductName))
+                .ForMember(dest => dest.ProductType, opt => opt.MapFrom(src => src.InsuranceProduct!.ProductType));
+
+            CreateMap<CustomerPolicyPurchaseRequestDTO, Policy>();
+            CreateMap<AgentOrAdminPolicyIssueRequestDTO, Policy>();
+            CreateMap<Policy, PolicyResponseDTO>()
+                .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => src.Customer!.User!.FullName))
+                .ForMember(dest => dest.PlanName, opt => opt.MapFrom(src => src.PolicyPlan!.PlanName));
+
+            CreateMap<PaymentRequestDTO, PremiumPayment>();
+            CreateMap<PremiumPayment, PaymentResponseDTO>()
+                .ForMember(dest => dest.PolicyNumber,opt => opt.MapFrom(src => src.Policy!.PolicyNumber));
+
+
+            CreateMap<ClaimRequestDTO, Claim>();
+            CreateMap<Claim, ClaimResponseDTO>()
+                .ForMember(dest => dest.PolicyNumber, opt => opt.MapFrom(src => src.Policy!.PolicyNumber))
+                .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => src.Policy!.Customer!.User!.FullName));
+            CreateMap<ClaimStatusHistory, ClaimStatusHistoryResponseDTO>()
+                .ForMember(dest => dest.UpdatedBy, opt => opt.MapFrom(src => src.User!.FullName))
+                .ForMember(dest => dest.ClaimNumber,opt => opt.MapFrom(src => src.Claim!.ClaimNumber));
+
+
+            CreateMap<ClaimDocument, ClaimDocumentResponseDTO>()
+                .ForMember(dest => dest.ClaimNumber, opt => opt.MapFrom(src => src.Claim!.ClaimNumber));
+        }
+    }
+}
