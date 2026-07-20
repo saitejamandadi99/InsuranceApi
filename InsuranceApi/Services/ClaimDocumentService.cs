@@ -60,7 +60,7 @@ namespace InsuranceApi.Services
             return _mapper.Map<IEnumerable<ClaimDocumentResponseDTO>>(documents);
         }
 
-        public async Task<ClaimDocumentResponseDTO> AddDocument(ClaimDocumentRequestDTO request, ClaimsPrincipal user)
+        public async Task<IEnumerable<ClaimDocumentResponseDTO>> AddDocument(ClaimDocumentRequestDTO request, ClaimsPrincipal user)
         {
             var existingClaim = await _claimRepo.GetClaimById(request.ClaimId);
             if(existingClaim == null)
@@ -86,13 +86,49 @@ namespace InsuranceApi.Services
             if(existingClaim.ClaimStatus == ClaimStatus.Approved || existingClaim.ClaimStatus == ClaimStatus.Rejected)
             {
                 throw new Exception("Documents cannot be added after claim is finalized.");
-
-
             }
-            var doc = _mapper.Map<ClaimDocument>(request);
-            doc.UploadedDate = DateTime.Now;
-            var created = await _documentRepo.AddClaimDocument(doc);
-            return _mapper.Map<ClaimDocumentResponseDTO>(created);
+
+            if(request.Files == null || request.Files.Count == 0)
+            {
+                throw new Exception("At least one file is required");
+            }
+
+            var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads", "ClaimDocuments");
+            if (!Directory.Exists(uploadPath))
+            {
+                Directory.CreateDirectory(uploadPath);
+            }
+
+            var createdDocs = new List<ClaimDocument>();
+
+            foreach(var file in request.Files)
+            {
+                if(file.Length == 0)
+                {
+                    continue;
+                }
+                var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                var fullPath = Path.Combine(uploadPath, uniqueFileName);
+
+                using(var stream = new FileStream(fullPath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                var doc = new ClaimDocument
+                {
+                    ClaimId = request.ClaimId,
+                    DocumentName = request.DocumentName,
+                    DocumentType = request.DocumentType,
+                    DocumentReference = uniqueFileName,
+                    UploadedDate = DateTime.Now
+                };
+
+                var created = await _documentRepo.AddClaimDocument(doc);
+                createdDocs.Add(created);
+            }
+
+            return _mapper.Map<IEnumerable<ClaimDocumentResponseDTO>>(createdDocs);
 
         }
 

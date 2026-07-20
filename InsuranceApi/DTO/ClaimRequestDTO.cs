@@ -19,7 +19,7 @@ namespace InsuranceApi.DTO
 
         public DateTime IncidentDate { get; set; }
 
-        [MinLength(1,ErrorMessage = "At least one supporting document reference is required. ")]
-        public List<string> DocumentReferences { get; set; } = [];
+        [MinLength(1, ErrorMessage = "At least one supporting document reference is required. ")]
+        public List<IFormFile> Files { get; set; } = new();
     }
 }

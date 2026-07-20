@@ -89,6 +89,15 @@ namespace InsuranceApi.Services
 
                 throw new Exception("Incident date cannot be a future date.");
             }
+            if(request.IncidentDate > DateTime.Now)
+            {
+                throw new Exception("Incident date cannot be a future date");
+            }
+            if(request.Files == null || request.Files.Count == 0 || request.Files.Any(f=>f.Length == 0))
+            {
+                throw new Exception("At least one valid document is required");
+            }
+            
             var claim = new InsuranceApi.Models.Claim
             {
                 ClaimNumber = await GenerateClaimNumber(),
@@ -101,15 +110,30 @@ namespace InsuranceApi.Services
                 UpdatedDate = DateTime.Now
             };
             var createdClaim = await _claimRepo.CreateClaim(claim);
+
+
             // Save all supporting documents
-            foreach (var reference in request.DocumentReferences)
+            var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads", "ClaimDocuments");
+            if (!Directory.Exists(uploadPath))
             {
+
+                Directory.CreateDirectory(uploadPath);
+            }
+            foreach (var file in request.Files)
+            {
+                var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                var fullPath = Path.Combine(uploadPath, uniqueFileName);
+                using(var stream = new FileStream(fullPath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
                 var document = new ClaimDocument
                 {
                     ClaimId = createdClaim.ClaimId,
                     DocumentName = "Supporting Document",
                     DocumentType = "Reference",
-                    DocumentReference = reference
+                    DocumentReference = uniqueFileName
                 };
                 await _documentRepo.AddClaimDocument(document);
             }

@@ -12,6 +12,7 @@ namespace InsuranceApi.Profiles
             CreateMap<User, UserResponseDTO>();
             CreateMap<CustomerRequestDTO, Customer>();
             CreateMap<Customer, CustomerResponseDTO>()
+                .ForMember(dest => dest.FullName,opt => opt.MapFrom(src => src.User!.FullName))
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.User!.Email))
                 .ForMember(dest => dest.MobileNumber, opt => opt.MapFrom(src => src.User!.MobileNumber));
 
@@ -27,7 +28,8 @@ namespace InsuranceApi.Profiles
             CreateMap<AgentOrAdminPolicyIssueRequestDTO, Policy>();
             CreateMap<Policy, PolicyResponseDTO>()
                 .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => src.Customer!.User!.FullName))
-                .ForMember(dest => dest.PlanName, opt => opt.MapFrom(src => src.PolicyPlan!.PlanName));
+                .ForMember(dest => dest.PlanName, opt => opt.MapFrom(src => src.PolicyPlan!.PlanName))
+                .ForMember(dest => dest.PremiumAmount, opt => opt.MapFrom(src => src.PolicyPlan!.PremiumAmount));
 
             CreateMap<PaymentRequestDTO, PremiumPayment>();
             CreateMap<PremiumPayment, PaymentResponseDTO>()

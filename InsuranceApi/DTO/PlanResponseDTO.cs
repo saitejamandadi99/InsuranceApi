@@ -9,6 +9,7 @@ namespace InsuranceApi.DTO
 
         public int PlanId { get; set; }
 
+        public int ProductId { get; set; }
         public string ProductName { get; set; } = string.Empty;
         public ProductType ProductType { get; set; }
         public string PlanName { get; set; } = string.Empty;

@@ -9,7 +9,7 @@ namespace InsuranceApi.Services
         Task<IEnumerable<ClaimDocumentResponseDTO>> GetDocumentsByClaimId(int claimId);
         Task<IEnumerable<ClaimDocumentResponseDTO>> GetDocumentsByCustomerId(int customerId);
 
-        Task<ClaimDocumentResponseDTO> AddDocument(ClaimDocumentRequestDTO request, ClaimsPrincipal user);
+        Task<IEnumerable<ClaimDocumentResponseDTO>> AddDocument(ClaimDocumentRequestDTO request, ClaimsPrincipal user);
 
         Task DeleteDocument(int documentId, ClaimsPrincipal user);
     }

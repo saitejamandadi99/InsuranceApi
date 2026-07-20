@@ -71,7 +71,8 @@ namespace InsuranceApi.Controllers
 
         [HttpPost("raise")]
         [Authorize(Roles = nameof(Role.Customer))]
-        public async Task<IActionResult> RaiseClaim(ClaimRequestDTO request)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> RaiseClaim([FromForm]ClaimRequestDTO request)
         {
             var claim = await _claimService.RaiseClaim(request, User);
             return CreatedAtSuccess(claim, "Claim raised successfully", nameof(GetClaimById), new { claimId = claim.ClaimId });

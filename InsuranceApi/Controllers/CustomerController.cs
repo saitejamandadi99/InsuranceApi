@@ -39,7 +39,7 @@ namespace InsuranceApi.Controllers
 
         [Authorize(Roles = nameof(Role.Customer))]
 
-        [HttpGet("/profile")]
+        [HttpGet("profile")]
         public async Task<IActionResult> GetMyProfile()
         {
             var customer = await _cusService.GetCustomerByUserId(User.GetUserId());

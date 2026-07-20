@@ -14,18 +14,18 @@ namespace InsuranceApi.Repositories
             _context = context;
         }
 
-        public async Task<Policy?> CancelPolicy(int policyId)
-        {
-            var existingPolicy = await GetPolicyById(policyId);
-            if(existingPolicy != null)
-            {
-                existingPolicy.PolicyStatus = PolicyStatus.Cancelled;
-                existingPolicy.UpdatedDate = DateTime.Now;
-                await _context.SaveChangesAsync();
-                return existingPolicy;
-            }
-            return null;
-        }
+        //public async Task<Policy?> CancelPolicy(int policyId)
+        //{
+        //    var existingPolicy = await GetPolicyById(policyId);
+        //    if(existingPolicy != null)
+        //    {
+        //        existingPolicy.PolicyStatus = PolicyStatus.Cancelled;
+        //        existingPolicy.UpdatedDate = DateTime.Now;
+        //        await _context.SaveChangesAsync();
+        //        return existingPolicy;
+        //    }
+        //    return null;
+        //}
 
         public async Task<Policy?> CreatePolicy(Policy policy) //works for both issue policy and purchasae policy
         {

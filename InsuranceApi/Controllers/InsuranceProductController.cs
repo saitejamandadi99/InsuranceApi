@@ -17,7 +17,7 @@ namespace InsuranceApi.Controllers
             _insuService = insuService;
         }
 
-        [Authorize(Roles = nameof(Role.Admin))]
+        [Authorize(Roles = $"{nameof(Role.Admin)},{nameof(Role.Officer)},{nameof(Role.Customer)}")]
         [HttpGet]
         public async Task<IActionResult> ListProducts([FromQuery] PaginationQueryDto query)
         {

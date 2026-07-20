@@ -37,8 +37,13 @@ namespace InsuranceApi.Services
             {
                 throw new Exception("Policy does not exists");
             }
-            var policy = await _policyRepo.CancelPolicy(policyId);
-            return _mapper.Map<PolicyResponseDTO>(policy);
+            if(existingPolicy.PolicyStatus == PolicyStatus.Cancelled)
+            {
+                throw new Exception("Policy is already cancelled");
+            }
+            existingPolicy.PolicyStatus = PolicyStatus.Cancelled;
+            await _policyRepo.UpdatePolicy(existingPolicy);
+            return _mapper.Map<PolicyResponseDTO>(existingPolicy);
         }
 
         public async Task<IEnumerable<PolicyResponseDTO>> GetPoliciesByCustomerId(int customerId)
@@ -90,6 +95,13 @@ namespace InsuranceApi.Services
             if (plan.ActiveStatus != ActiveStatus.Active)
             {
                 throw new Exception("plan is not active");
+            }
+
+            var existingPolicies = await _policyRepo.GetPoliciesByCustomerId(customer.CustomerId);
+
+            if (existingPolicies.Any(p => p.PlanId == plan.PlanId))
+            {
+                throw new Exception("Customer has already subscribed to this policy plan.");
             }
 
             var addPolicy = new Policy
@@ -155,6 +167,21 @@ namespace InsuranceApi.Services
             if (plan.ActiveStatus != ActiveStatus.Active)
             {
                 throw new Exception("plan is not active");
+            }
+
+            var existingPolicies = await _policyRepo.GetPoliciesByCustomerId(customer.CustomerId);
+
+            if (existingPolicies.Any(p => p.PlanId == plan.PlanId))
+            {
+                throw new Exception("You have already subscribed to this policy plan.");
+            }
+
+
+
+            var today = DateTime.Today;
+            if(request.StartDate.Date < today)
+            {
+                throw new Exception("Date cannot be in the past");
             }
 
             var addPolicy = new Policy

@@ -23,6 +23,7 @@ namespace InsuranceApi.DTO
         public PolicyStatus PolicyStatus { get; set; }
 
         public decimal TotalPremiumPaid { get; set; }
+        public decimal PremiumAmount { get; set; }
 
     }
 }

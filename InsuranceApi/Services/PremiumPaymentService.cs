@@ -92,6 +92,10 @@ namespace InsuranceApi.Services
                 throw new Exception("Cannot make payment for a cancelled policy.");
             }
 
+            if (policy.PolicyStatus == PolicyStatus.Active)
+            {
+                throw new Exception("Premium has already been fully paid for this policy.");
+            }
 
             return await RecordPayment(request, policy);
         }
@@ -106,6 +110,11 @@ namespace InsuranceApi.Services
             if (policy.PolicyStatus == PolicyStatus.Cancelled)
             {
                 throw new Exception("Cannot make payment for a cancelled policy.");
+            }
+
+            if (policy.PolicyStatus == PolicyStatus.Active)
+            {
+                throw new Exception("Premium has already been fully paid for this policy.");
             }
 
             return await RecordPayment(request, policy);

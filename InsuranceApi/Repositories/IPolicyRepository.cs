@@ -8,7 +8,7 @@ namespace InsuranceApi.Repositiries
         Task<PaginatedResponseDTO<Policy>> ListPolicies(PaginationQueryDto query);
         Task<Policy?> CreatePolicy(Policy policy);
         Task<Policy?> GetPolicyByPolicyNumber(string policyNumber);
-        Task<Policy?> CancelPolicy(int policyId);
+        //Task<Policy?> CancelPolicy(int policyId);
         Task<Policy?> GetPolicyById(int policyId);
         Task<IEnumerable<Policy>> GetPoliciesByCustomerId(int customerId);
         Task<IEnumerable<Policy>> GetPoliciesByPlanId(int planId);

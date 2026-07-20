@@ -31,7 +31,7 @@ namespace InsuranceApi.Controllers
         }
 
         [HttpGet("{documentId}")]
-        [Authorize(Roles = $"{nameof(Role.Admin)},{nameof(Role.Officer)}")]
+        [Authorize(Roles = $"{nameof(Role.Admin)},{nameof(Role.Officer)},{nameof(Role.Customer)}")]
         public async Task<IActionResult> GetDocumentById(int documentId)
         {
             var document = await _documentService.GetDocumentById(documentId);
@@ -70,11 +70,12 @@ namespace InsuranceApi.Controllers
 
         [HttpPost]
         [Authorize(Roles = nameof(Role.Customer))]
-        public async Task<IActionResult> AddDocument([FromBody] ClaimDocumentRequestDTO request)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> AddDocument([FromForm] ClaimDocumentRequestDTO request)
         {
-            var document = await _documentService.AddDocument(request, User);
+            var documents = await _documentService.AddDocument(request, User);
 
-            return CreatedAtSuccess(document,"Document uploaded successfully.",nameof(GetDocumentById),new { documentId = document.DocumentId });
+            return Success(documents,"Document uploaded successfully.");
         }
 
         [HttpDelete("{documentId}")]
@@ -83,7 +84,7 @@ namespace InsuranceApi.Controllers
         {
             await _documentService.DeleteDocument(documentId, User);
 
-            return Success("Document deleted successfully.","Document deleted successfully.");
+            return Success<string?>(null, "Document deleted successfully."); //sending null becase of no data from the service 
         }
     }
 }
