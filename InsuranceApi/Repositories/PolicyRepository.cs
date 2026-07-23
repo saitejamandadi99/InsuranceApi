@@ -73,9 +73,12 @@ namespace InsuranceApi.Repositories
             {
                 ("policynumber", "desc") => policies.OrderByDescending(p => p.PolicyNumber),
                 ("policynumber", _) => policies.OrderBy(p => p.PolicyNumber),
+
                 ("planname", "desc") => policies.OrderByDescending(p => p.PolicyPlan.PlanName),
                 ("planname", _) => policies.OrderBy(p => p.PolicyPlan.PlanName),
 
+                ("customername", "desc") => policies.OrderByDescending(p=>p.Customer.User.FullName),
+                ("customername", _) => policies.OrderBy(p=>p.Customer.User.FullName),
 
                 ("startdate", "desc") => policies.OrderByDescending(p => p.StartDate),
                 ("startdate", _) => policies.OrderBy(p => p.StartDate),

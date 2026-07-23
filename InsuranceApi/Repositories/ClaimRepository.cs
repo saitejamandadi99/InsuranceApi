@@ -75,12 +75,17 @@ namespace InsuranceApi.Repositories
                 ("claimnumber", "desc") => claims.OrderByDescending(c => c.ClaimNumber),
                 ("claimnumber", _) => claims.OrderBy(c => c.ClaimNumber),
 
-                ("amount", "desc") => claims.OrderByDescending(c => c.ClaimAmount),
-                ("amount", _) => claims.OrderBy(c => c.ClaimAmount),
+                ("policynumber", "desc")=>claims.OrderByDescending(c=>c.Policy.PolicyNumber),
+                ("policynumber", _)=>claims.OrderBy(c=>c.Policy.PolicyNumber),
 
+                ("claimamount", "desc") => claims.OrderByDescending(c => c.ClaimAmount),
+                ("claimamount", _) => claims.OrderBy(c => c.ClaimAmount),
 
-                ("incidentdate", "desc") => claims.OrderByDescending(c => c.CreatedDate),
-                ("incidentdate", _) => claims.OrderBy(c => c.CreatedDate),
+                ("claimstatus", "desc") =>claims.OrderByDescending(c=>c.ClaimStatus),
+                ("claimstatus", _)=>claims.OrderBy(c=>c.ClaimStatus),
+
+                ("incidentdate", "desc") => claims.OrderByDescending(c => c.IncidentDate),
+                ("incidentdate", _) => claims.OrderBy(c => c.IncidentDate),
 
                 _ => claims.OrderBy(c => c.ClaimId)
             };
