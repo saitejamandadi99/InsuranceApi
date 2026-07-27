@@ -89,7 +89,7 @@ namespace InsuranceApi.Repositories
         public async Task<PremiumPayment> RecordPayment(PremiumPayment payment)
         {
             _context.PremiumPayments.Add(payment);
-            await _context.SaveChangesAsync();
+            //await _context.SaveChangesAsync();
             return payment;
 
         }

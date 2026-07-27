@@ -121,6 +121,10 @@ namespace InsuranceApi.Repositories
         public async Task UpdatePolicy(Policy policy)
         {
             policy.UpdatedDate = DateTime.Now;
+        }
+
+        public async Task SaveChangesAsync()
+        {
             await _context.SaveChangesAsync();
         }
     }

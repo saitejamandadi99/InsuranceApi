@@ -89,9 +89,9 @@ namespace InsuranceApi.Services
 
                 throw new Exception("Incident date cannot be a future date.");
             }
-            if(request.IncidentDate > DateTime.Now)
+            if(request.IncidentDate < policy.StartDate)
             {
-                throw new Exception("Incident date cannot be a future date");
+                throw new Exception("Incident date cannot be before the policy start date");
             }
             if(request.Files == null || request.Files.Count == 0 || request.Files.Any(f=>f.Length == 0))
             {

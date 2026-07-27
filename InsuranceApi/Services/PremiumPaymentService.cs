@@ -153,6 +153,7 @@ namespace InsuranceApi.Services
             policy.UpdatedDate = DateTime.Now;
 
             await _policyRepo.UpdatePolicy(policy);
+            await _policyRepo.SaveChangesAsync();
 
             createdPayment.Policy = policy;
             _logger.LogInformation("Premium payment of {Amount} recorded for policy '{PolicyNumber}'.",request.Amount,policy.PolicyNumber);

@@ -14,5 +14,7 @@ namespace InsuranceApi.Repositiries
         Task<IEnumerable<Policy>> GetPoliciesByPlanId(int planId);
         Task UpdatePolicy(Policy policy);
 
+        Task SaveChangesAsync();
+
     }
 }
