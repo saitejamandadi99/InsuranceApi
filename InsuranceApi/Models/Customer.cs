@@ -45,5 +45,7 @@ namespace InsuranceApi.Models
 
         public ICollection<Policy>? Policies { get; set; }
 
+        public string? ProfileImageUrl { get; set; }
+
     }
 }

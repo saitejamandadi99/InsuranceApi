@@ -4,6 +4,7 @@ using InsuranceApi.DTO;
 using InsuranceApi.Models;
 using InsuranceApi.Repositiries;
 using InsuranceApi.Repositories;
+using System.Runtime.Serialization.Formatters;
 using System.Security.Claims;
 
 namespace InsuranceApi.Services
@@ -14,13 +15,15 @@ namespace InsuranceApi.Services
         private readonly ICustomerRepository _cusRepo;
         private readonly IUserService _userService;
         private readonly IMapper _mapper;
+        private readonly IImageService _imageService;
 
-        public CustomerService(IUserRepository userRepo, ICustomerRepository cusRepo, IUserService userService, IMapper mapper)
+        public CustomerService(IUserRepository userRepo, ICustomerRepository cusRepo, IUserService userService, IMapper mapper, IImageService imageService)
         {
             _userRepo = userRepo;
             _cusRepo = cusRepo;
             _userService = userService;
             _mapper = mapper;
+            _imageService = imageService;
         }
 
         public async Task<CustomerResponseDTO> CreateProfile(CustomerRequestDTO request, ClaimsPrincipal user)
@@ -36,6 +39,13 @@ namespace InsuranceApi.Services
 
             var customer = _mapper.Map<Customer>(request);
             customer.UserId = userId;
+
+            string? imageUrl = null;
+            if(request.ProfileImage != null)
+            {
+                imageUrl = await _imageService.UploadImageToCloudAsync(request.ProfileImage);
+            }
+            customer.ProfileImageUrl = imageUrl;
             var createdCustomer = await _cusRepo.CreateProfile(customer);
             return _mapper.Map<CustomerResponseDTO>(createdCustomer);
         }
@@ -85,6 +95,11 @@ namespace InsuranceApi.Services
                 throw new Exception("Customer does not exists");
             }
             _mapper.Map(request, existingCustomer);
+
+            if (request.ProfileImage != null)
+            {
+                existingCustomer.ProfileImageUrl = await _imageService.UploadImageToCloudAsync(request.ProfileImage);
+            }        
             var updatedCustomer = await _cusRepo.UpdateProfile(existingCustomer.CustomerId, existingCustomer);
             return _mapper.Map<CustomerResponseDTO>(updatedCustomer);
         }

@@ -30,5 +30,7 @@ namespace InsuranceApi.DTO
         [Required(ErrorMessage = "NomineeRelationship is required")]
         [StringLength(50, MinimumLength = 3, ErrorMessage = "NomineeRelationship should be written between 3 to 50 characters")]
         public string NomineeRelationship { get; set; }
+
+        public IFormFile? ProfileImage { get; set; }
     }
 }

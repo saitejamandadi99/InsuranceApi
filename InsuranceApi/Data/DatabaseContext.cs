@@ -73,6 +73,11 @@ namespace InsuranceApi.Data
             // Policy -> PremiumPayment
 
             modelBuilder.Entity<Policy>().HasMany(p => p.PremiumPayments).WithOne(pp => pp.Policy).HasForeignKey(pp => pp.PolicyId).OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<Policy>().HasIndex(p => new
+            {
+                p.CustomerId,
+                p.PlanId
+            }).IsUnique(); 
 
             // Policy -> Claim
 

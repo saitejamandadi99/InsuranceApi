@@ -27,5 +27,7 @@ namespace InsuranceApi.DTO
         public string NomineeName { get; set; }
 
         public string NomineeRelationship { get; set; }
+
+        public string? ProfileImageUrl { get; set; }
     }
 }

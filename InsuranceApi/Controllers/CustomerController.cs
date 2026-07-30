@@ -59,7 +59,7 @@ namespace InsuranceApi.Controllers
 
         [Authorize(Roles =nameof(Role.Customer))]
         [HttpPost]
-        public async Task<IActionResult> CreateProfile([FromBody] CustomerRequestDTO request)
+        public async Task<IActionResult> CreateProfile([FromForm] CustomerRequestDTO request)
         {
             var customer = await _cusService.CreateProfile(request, User);
             return CreatedAtSuccess(customer, "customer profile created successfully", nameof(GetCustomerById), new { id = customer.CustomerId});
@@ -67,7 +67,7 @@ namespace InsuranceApi.Controllers
 
         [Authorize(Roles = nameof(Role.Customer))]
         [HttpPut]
-        public async Task<IActionResult> UpdateProfile([FromBody] CustomerRequestDTO request)
+        public async Task<IActionResult> UpdateProfile([FromForm] CustomerRequestDTO request)
         {
             var customer = await _cusService.UpdateProfile(User.GetUserId(), request);
             return Success(customer, "Updated customer successfully");

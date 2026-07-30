@@ -4,6 +4,7 @@ using InsuranceApi.DTO;
 using InsuranceApi.Middleware;
 using InsuranceApi.Models;
 using InsuranceApi.Repositiries;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
@@ -118,11 +119,23 @@ namespace InsuranceApi.Services
 
             };
 
-            var createdPolicy = await _policyRepo.CreatePolicy(addPolicy);
-            createdPolicy.Customer = customer;
-            createdPolicy.PolicyPlan = plan;
-            _logger.LogInformation("Policy '{PolicyNumber}' issued for customer '{CustomerId}'.",createdPolicy.PolicyNumber,customer.CustomerId);
-            return _mapper.Map<PolicyResponseDTO>(createdPolicy);
+            try
+            {
+                var createdPolicy = await _policyRepo.CreatePolicy(addPolicy);
+                createdPolicy.Customer = customer;
+                createdPolicy.PolicyPlan = plan;
+                _logger.LogInformation("Policy '{PolicyNumber}' issued for customer '{CustomerId}'.", createdPolicy.PolicyNumber, customer.CustomerId);
+                return _mapper.Map<PolicyResponseDTO>(createdPolicy);
+            }
+            catch (DbUpdateException ex)
+            {
+                if (ex.InnerException is SqlException sqlEx && (sqlEx.Number == 2601 || sqlEx.Number == 2627)) //2601 -> for duplicate key in a unqiue index, 2627 -> violation of unique constraint. 
+                {
+                    throw new Exception("Customer has already subscribed to this policy plan.");
+                }
+
+                throw;
+            }
         }
 
         public async Task<PaginatedResponseDTO<PolicyResponseDTO>> ListPolicies(PaginationQueryDto query)
@@ -197,12 +210,25 @@ namespace InsuranceApi.Services
                 UpdatedDate  = DateTime.Now,
 
             };
+            try
+            {
+                var createdPolicy = await _policyRepo.CreatePolicy(addPolicy);
+                createdPolicy.Customer = customer;
+                createdPolicy.PolicyPlan = plan;
+                _logger.LogInformation("Customer '{CustomerId}' purchased policy '{PolicyNumber}'.", customer.CustomerId, createdPolicy.PolicyNumber);
+                return _mapper.Map<PolicyResponseDTO>(createdPolicy);
+            }
+            catch (DbUpdateException ex)
+            {
+                if (ex.InnerException is SqlException sqlEx && (sqlEx.Number == 2601 || sqlEx.Number == 2627))
+                {
+                    throw new Exception("Customer has already subscribed to this policy plan.");
+                }
 
-            var createdPolicy = await _policyRepo.CreatePolicy(addPolicy);
-            createdPolicy.Customer = customer;
-            createdPolicy.PolicyPlan = plan;
-            _logger.LogInformation("Customer '{CustomerId}' purchased policy '{PolicyNumber}'.",customer.CustomerId,createdPolicy.PolicyNumber);
-            return _mapper.Map<PolicyResponseDTO>(createdPolicy);
+                throw;
+            }
+
+
 
         }
         public async Task<string> GeneratePolicyNumber()

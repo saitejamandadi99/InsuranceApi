@@ -34,7 +34,7 @@ namespace InsuranceApi.Models
         public DateTime UpdatedDate { get; set; } = DateTime.Now;
 
         public virtual Customer? Customer { get; set; }
-
+        
         public virtual PolicyPlan? PolicyPlan { get; set; }
 
 

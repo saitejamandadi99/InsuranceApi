@@ -13,6 +13,8 @@ using System.Text;
 using System.Text.Json.Serialization;
 using InsuranceApi.Middleware;
 using Serilog;
+using CloudinaryDotNet;
+using Microsoft.Extensions.Options;
 namespace InsuranceApi
 {
     public class Program
@@ -73,6 +75,23 @@ namespace InsuranceApi
             });
 
             builder.Services.Configure<JWTSettings>(builder.Configuration.GetSection("JWTSettings"));
+
+
+            //Register cloudinary 
+            builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+
+            builder.Services.AddSingleton(provider =>
+            {
+                var settings = provider.GetRequiredService<IOptions<CloudinarySettings>>().Value;
+                var account = new Account(
+
+                    settings.CloudName,
+                    settings.ApiKey,
+                    settings.ApiSecret);
+                return new Cloudinary(account);
+            });
+
+            builder.Services.AddScoped<IImageService, ImageService>();
 
             builder.Services.AddAutoMapper(opt => opt.AddProfile(typeof(MappingProfile)));
 

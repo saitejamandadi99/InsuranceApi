@@ -1,9 +1,12 @@
 ﻿using AutoMapper;
 using InsuranceApi.Config;
+using InsuranceApi.Data;
 using InsuranceApi.DTO;
 using InsuranceApi.Middleware;
 using InsuranceApi.Models;
 using InsuranceApi.Repositiries;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
 
@@ -16,15 +19,17 @@ namespace InsuranceApi.Services
         private readonly ICustomerRepository _cusRepo;
         private readonly IMapper _mapper;
         private readonly ILogger<PremiumPaymentService> _logger;
+        private readonly DatabaseContext _context;
 
 
-        public PremiumPaymentService(IPremiumPaymentRepository paymentRepo,IPolicyRepository policyRepo,ICustomerRepository cusRepo, IMapper mapper, ILogger<PremiumPaymentService> logger)
+        public PremiumPaymentService(IPremiumPaymentRepository paymentRepo,IPolicyRepository policyRepo,ICustomerRepository cusRepo, IMapper mapper, ILogger<PremiumPaymentService> logger, DatabaseContext context)
         {
             _paymentRepo = paymentRepo;
             _policyRepo = policyRepo;
             _cusRepo = cusRepo;
             _mapper = mapper;
             _logger = logger;
+            _context = context;
 
         }
 
@@ -122,42 +127,55 @@ namespace InsuranceApi.Services
 
         private async Task<PaymentResponseDTO> RecordPayment(PaymentRequestDTO request, Policy policy)
         {
-            var existingTransaction =await _paymentRepo.GetPaymentByTransactionReference(request.TransactionReference);
-
-            if (existingTransaction != null)
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                throw new Exception("Transaction reference already exists.");
+                var existingTransaction = await _paymentRepo.GetPaymentByTransactionReference(request.TransactionReference);
+
+                if (existingTransaction != null)
+                {
+                    throw new Exception("Transaction reference already exists.");
+                }
+                if (request.Amount <= 0)
+                {
+                    throw new Exception("Amount should be greater than 0.");
+                }
+                if (policy.TotalPremiumPaid + request.Amount > policy.PolicyPlan.PremiumAmount)
+                {
+                    throw new Exception("Payment exceeds premium amount.");
+                }
+
+                var payment = _mapper.Map<PremiumPayment>(request);
+                payment.PaymentDate = DateTime.Now;
+                payment.PaymentStatus = PaymentStatus.Success;
+                payment.CreatedDate = DateTime.Now;
+
+                var createdPayment = await _paymentRepo.RecordPayment(payment);
+
+                policy.TotalPremiumPaid += request.Amount;
+                if (policy.TotalPremiumPaid >= policy.PolicyPlan.PremiumAmount)
+                {
+                    policy.PolicyStatus = PolicyStatus.Active;
+                }
+
+                policy.UpdatedDate = DateTime.Now;
+
+                await _policyRepo.UpdatePolicy(policy);
+                await _policyRepo.SaveChangesAsync();
+
+                createdPayment.Policy = policy;
+                _logger.LogInformation("Premium payment of {Amount} recorded for policy '{PolicyNumber}'.", request.Amount, policy.PolicyNumber);
+
+                await transaction.CommitAsync();
+                return _mapper.Map<PaymentResponseDTO>(createdPayment);
+
             }
-            if (request.Amount <= 0)
+            catch
             {
-                throw new Exception("Amount should be greater than 0.");
+                await transaction.RollbackAsync();
+                throw;
             }
-            if (policy.TotalPremiumPaid + request.Amount > policy.PolicyPlan.PremiumAmount)
-            {
-                throw new Exception("Payment exceeds premium amount.");
-            }
-
-            var payment = _mapper.Map<PremiumPayment>(request);
-            payment.PaymentDate = DateTime.Now;
-            payment.PaymentStatus = PaymentStatus.Success;
-            payment.CreatedDate = DateTime.Now;
-
-            var createdPayment = await _paymentRepo.RecordPayment(payment);
-
-            policy.TotalPremiumPaid += request.Amount;
-            if (policy.TotalPremiumPaid >= policy.PolicyPlan.PremiumAmount)
-            {
-                policy.PolicyStatus = PolicyStatus.Active;
-            }
-
-            policy.UpdatedDate = DateTime.Now;
-
-            await _policyRepo.UpdatePolicy(policy);
-            await _policyRepo.SaveChangesAsync();
-
-            createdPayment.Policy = policy;
-            _logger.LogInformation("Premium payment of {Amount} recorded for policy '{PolicyNumber}'.",request.Amount,policy.PolicyNumber);
-            return _mapper.Map<PaymentResponseDTO>(createdPayment);
+           
         }
     }
 }
