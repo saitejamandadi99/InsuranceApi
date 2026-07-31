@@ -17,10 +17,11 @@ namespace InsuranceApi.Services
         private readonly IClaimDocumentRepository _documentRepo;
         private readonly IClaimStatusHistoryRepository _historyRepo;
         private readonly IMapper _mapper;
+        private readonly IDocumentService _docService;
         private readonly ILogger<ClaimService> _logger;
 
 
-        public ClaimService(IClaimRepository claimRepo,IPolicyRepository policyRepo,ICustomerRepository customerRepo,IClaimDocumentRepository documentRepo,IClaimStatusHistoryRepository historyRepo,IMapper mapper, ILogger<ClaimService> logger)
+        public ClaimService(IClaimRepository claimRepo,IPolicyRepository policyRepo,ICustomerRepository customerRepo,IClaimDocumentRepository documentRepo,IClaimStatusHistoryRepository historyRepo,IMapper mapper, ILogger<ClaimService> logger, IDocumentService docService)
         {
             _claimRepo = claimRepo;
             _policyRepo = policyRepo;
@@ -29,6 +30,7 @@ namespace InsuranceApi.Services
             _historyRepo = historyRepo;
             _mapper = mapper;
             _logger = logger;
+            _docService = docService;
 
         }
 
@@ -113,30 +115,22 @@ namespace InsuranceApi.Services
 
 
             // Save all supporting documents
-            var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads", "ClaimDocuments");
-            if (!Directory.Exists(uploadPath))
-            {
 
-                Directory.CreateDirectory(uploadPath);
-            }
             foreach (var file in request.Files)
             {
-                var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-                var fullPath = Path.Combine(uploadPath, uniqueFileName);
-                using(var stream = new FileStream(fullPath, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
+                    var documentReference = await _docService.UploadClaimDocumentAsync(file);
 
-                var document = new ClaimDocument
-                {
-                    ClaimId = createdClaim.ClaimId,
-                    DocumentName = "Supporting Document",
-                    DocumentType = "Reference",
-                    DocumentReference = uniqueFileName
-                };
-                await _documentRepo.AddClaimDocument(document);
+                    var document = new ClaimDocument
+                    {
+                        ClaimId = createdClaim.ClaimId,
+                        DocumentName = "Supporting Document",
+                        DocumentType = "Reference",
+                        DocumentReference = documentReference
+                    };
+
+                    await _documentRepo.AddClaimDocument(document);
             }
+            
             // Initial claim history
             var history = new ClaimStatusHistory
             {
