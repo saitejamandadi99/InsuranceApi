@@ -41,5 +41,8 @@ namespace InsuranceApi.Models
         public virtual ICollection<PremiumPayment>? PremiumPayments { get; set; }
         public virtual ICollection<Claim>? Claims { get; set; }
 
+        [Timestamp]
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+
     }
 }

@@ -5,6 +5,7 @@ using InsuranceApi.DTO;
 using InsuranceApi.Middleware;
 using InsuranceApi.Models;
 using InsuranceApi.Repositiries;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
 using System.Reflection.Metadata.Ecma335;
@@ -161,14 +162,30 @@ namespace InsuranceApi.Services
                 policy.UpdatedDate = DateTime.Now;
 
                 await _policyRepo.UpdatePolicy(policy);
-                await _policyRepo.SaveChangesAsync();
 
+                await _policyRepo.SaveChangesAsync();
                 createdPayment.Policy = policy;
                 _logger.LogInformation("Premium payment of {Amount} recorded for policy '{PolicyNumber}'.", request.Amount, policy.PolicyNumber);
 
                 await transaction.CommitAsync();
                 return _mapper.Map<PaymentResponseDTO>(createdPayment);
 
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                await transaction.RollbackAsync();
+                throw new Exception("The policy was modified by another request. Please try again.");
+            }
+            catch (DbUpdateException ex)
+            {
+                if (ex.InnerException is SqlException sqlEx && (sqlEx.Number == 2601 || sqlEx.Number == 2627)) //2601 -> duplicate key , 2627-> violate of unique constraint
+                {
+                    await transaction.RollbackAsync();
+                    throw new Exception("Transaction reference already exists.");
+                }
+
+                await transaction.RollbackAsync();
+                throw;
             }
             catch
             {
