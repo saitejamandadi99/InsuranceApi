@@ -92,7 +92,7 @@ namespace InsuranceApi
             });
 
             builder.Services.AddScoped<IImageService, ImageService>();
-
+            builder.Services.AddScoped<IDocumentService, DocumentService>();
             builder.Services.AddAutoMapper(opt => opt.AddProfile(typeof(MappingProfile)));
 
             //add the Authentication Service

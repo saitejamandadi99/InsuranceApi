@@ -14,15 +14,16 @@ namespace InsuranceApi.Services
         private readonly IClaimDocumentRepository _documentRepo;
         private readonly IClaimRepository _claimRepo;
         private readonly ICustomerRepository _cusRepo;
-
+        private readonly IDocumentService _docService;
         private readonly IMapper _mapper;
 
-        public ClaimDocumentService(IClaimDocumentRepository documentRepo, IMapper mapper, IClaimRepository claimRepo, ICustomerRepository cusRepo)
+        public ClaimDocumentService(IClaimDocumentRepository documentRepo, IMapper mapper, IClaimRepository claimRepo, ICustomerRepository cusRepo, IDocumentService docService)
         {
             _documentRepo = documentRepo;
             _mapper = mapper;
             _claimRepo = claimRepo;
             _cusRepo = cusRepo;
+            _docService = docService;
         }
         public async Task<PaginatedResponseDTO<ClaimDocumentResponseDTO>> ListDocuments(PaginationQueryDto query)
         {
@@ -93,12 +94,6 @@ namespace InsuranceApi.Services
                 throw new Exception("At least one file is required");
             }
 
-            var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads", "ClaimDocuments");
-            if (!Directory.Exists(uploadPath))
-            {
-                Directory.CreateDirectory(uploadPath);
-            }
-
             var createdDocs = new List<ClaimDocument>();
 
             foreach(var file in request.Files)
@@ -107,20 +102,14 @@ namespace InsuranceApi.Services
                 {
                     continue;
                 }
-                var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-                var fullPath = Path.Combine(uploadPath, uniqueFileName);
-
-                using(var stream = new FileStream(fullPath, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
+                var documentReference = await _docService.UploadClaimDocumentAsync(file);
 
                 var doc = new ClaimDocument
                 {
                     ClaimId = request.ClaimId,
                     DocumentName = request.DocumentName,
                     DocumentType = request.DocumentType,
-                    DocumentReference = uniqueFileName,
+                    DocumentReference = documentReference,
                     UploadedDate = DateTime.Now
                 };
 
@@ -163,6 +152,7 @@ namespace InsuranceApi.Services
             {
                 throw new Exception("Documents cannot be deleted after claim is finalized.");
             }
+            await _docService.DeleteDocumentAsync(document.DocumentReference);
 
             await _documentRepo.DeleteDocument(document);
 
